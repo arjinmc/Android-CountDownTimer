@@ -2,7 +2,6 @@ package com.arjinmc.countdowntimer;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -17,12 +16,12 @@ import java.util.TimerTask;
  */
 public class CountDownTimerService extends Service {
 
-    private final long timer_unit =1000;
-    private long distination_total = timer_unit*100;
+    private static final long timer_unit =1000;
+    private static long mDistination_total;
     private Timer timer;
     private MyTimerTask timerTask;
 
-    private long timer_couting = distination_total;
+    private static long timer_couting = 0;
 
 
     private int timerStatus = CountDownTimerUtil.PREPARE;
@@ -31,12 +30,16 @@ public class CountDownTimerService extends Service {
 
     private static CountDownTimerListener mCountDownTimerListener;
 
-    public static CountDownTimerService getInstance(CountDownTimerListener countDownTimerListener){
+    public static CountDownTimerService getInstance(CountDownTimerListener countDownTimerListener
+            ,long distination_total){
         if(countDownTimerService==null){
             countDownTimerService = new CountDownTimerService();
         }
         setCountDownTimerListener(countDownTimerListener);
-
+        mDistination_total = distination_total;
+        if(timer_couting==0) {
+            timer_couting = mDistination_total;
+        }
         return  countDownTimerService;
     }
 
@@ -46,10 +49,6 @@ public class CountDownTimerService extends Service {
         return null;
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return super.onStartCommand(intent, flags, startId);
-    }
 
     @Override
     public void onCreate() {
@@ -104,19 +103,6 @@ public class CountDownTimerService extends Service {
     }
 
     /**
-     * bindr
-     */
-    public class CountDownTimerServiceBinder extends Binder {
-        /**
-         * get this service
-         * @return
-         */
-        public CountDownTimerService getService(){
-            return CountDownTimerService.this;
-        }
-    }
-
-    /**
      * count down task
      */
     private class MyTimerTask extends TimerTask {
@@ -125,7 +111,7 @@ public class CountDownTimerService extends Service {
         @Override
         public void run() {
             timer_couting -=timer_unit;
-            Log.e("timmer", timer_couting + "");
+            Log.d("timmer", timer_couting + "");
             mCountDownTimerListener.onChange();
             if(timer_couting==0){
                 cancel();
@@ -138,7 +124,7 @@ public class CountDownTimerService extends Service {
      * init timer status
      */
     private void initTimerStatus(){
-        timer_couting = distination_total;
+        timer_couting = mDistination_total;
         timerStatus = CountDownTimerUtil.PREPARE;
     }
 
@@ -150,4 +136,5 @@ public class CountDownTimerService extends Service {
         timerTask = new MyTimerTask();
         timer.scheduleAtFixedRate(timerTask, 0, timer_unit);
     }
+
 }

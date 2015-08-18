@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private long timer_unit = 1000;
     private long distination_total = timer_unit*10;
+    private long service_distination_total = timer_unit*200;
     private long timer_couting;
 
 
@@ -87,7 +88,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnServiceStart.setOnClickListener(this);
         btnServiceStop.setOnClickListener(this);
 
-        countDownTimerService = CountDownTimerService.getInstance(new MyCountDownLisener());
+        tvTime.setText(formateTimer(timer_couting));
+
+        countDownTimerService = CountDownTimerService.getInstance(new MyCountDownLisener()
+                ,service_distination_total);
         initServiceCountDownTimerStatus();
 
     }
@@ -213,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * init countdowntimer buttons status for servce
      */
     private void initServiceCountDownTimerStatus(){
-        switch (countDownTimerService.getTimerStatus()){
+        switch (countDownTimerService.getTimerStatus()) {
             case CountDownTimerUtil.PREPARE:
                 btnServiceStart.setText("START");
                 break;
@@ -224,6 +228,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 btnServiceStart.setText("RESUME");
                 break;
         }
+        tvServiceTime.setText(formateTimer(countDownTimerService.getCountingTime()));
+
     }
 
 }
