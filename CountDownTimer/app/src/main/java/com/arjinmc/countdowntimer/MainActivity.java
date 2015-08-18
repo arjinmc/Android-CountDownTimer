@@ -50,6 +50,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     break;
                 case 2:
                     tvServiceTime.setText(formateTimer(countDownTimerService.getCountingTime()));
+                    if(countDownTimerService.getTimerStatus()==CountDownTimerUtil.PREPARE){
+                        btnServiceStart.setText("START");
+                    }
                     break;
             }
         }
