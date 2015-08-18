@@ -13,22 +13,27 @@ import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
+    //ui countdown
     private Button btnStart;
     private Button btnStop;
     private TextView tvTime;
+
+    //service countdown
+    private Button btnServiceStart;
+    private Button btnServiceStop;
+    private TextView tvServiceTime;
 
     private long timer_unit = 1000;
     private long distination_total = timer_unit*10;
     private long timer_couting;
 
-    private final int PREPARE = 0;
-    private final int START = 1;
-    private final int PASUSE = 2;
 
-    private int timerSatus = PREPARE;
+    private int timerStatus = CountDownTimerUtil.PREPARE;
 
     private Timer timer;
     private TimerTask timerTask;
+
+    private CountDownTimerService countDownTimerService;
 
 
     private Handler mHandler = new Handler(){
@@ -36,12 +41,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if(timer_couting==distination_total){
-                btnStart.setText("START");
+            switch (msg.what){
+                case 1:
+                    if(timer_couting==distination_total){
+                        btnStart.setText("START");
+                    }
+                    tvTime.setText(formateTimer(timer_couting));
+                    break;
+                case 2:
+                    tvServiceTime.setText(formateTimer(countDownTimerService.getCountingTime()));
+                    break;
             }
-            tvTime.setText(formateTimer(timer_couting));
         }
     };
+
+    private class MyCountDownLisener implements CountDownTimerListener {
+
+        @Override
+        public void onChange() {
+           mHandler.sendEmptyMessage(2);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,26 +77,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         initTimerStatus();
 
 
+        btnServiceStart = (Button) findViewById(R.id.btn_start2);
+        btnServiceStop = (Button) findViewById(R.id.btn_stop2);
+        tvServiceTime = (TextView) findViewById(R.id.tv_time2);
+
+        btnServiceStart.setOnClickListener(this);
+        btnServiceStop.setOnClickListener(this);
+
+        countDownTimerService = CountDownTimerService.getInstance(new MyCountDownLisener());
+        initServiceCountDownTimerStatus();
+
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.btn_start:
-                switch (timerSatus){
-                    case PREPARE:
+                switch (timerStatus){
+                    case CountDownTimerUtil.PREPARE:
                         startTimer();
-                        timerSatus = START;
+                        timerStatus = CountDownTimerUtil.START;
                         btnStart.setText("PAUSE");
                         break;
-                    case START:
+                    case CountDownTimerUtil.START:
                         timer.cancel();
-                        timerSatus = PASUSE;
+                        timerStatus = CountDownTimerUtil.PASUSE;
                         btnStart.setText("RESUME");
                         break;
-                    case PASUSE:
+                    case CountDownTimerUtil.PASUSE:
                         startTimer();
-                        timerSatus = START;
+                        timerStatus = CountDownTimerUtil.START;
                         btnStart.setText("PAUSE");
                         break;
                 }
@@ -88,6 +118,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mHandler.sendEmptyMessage(1);
                 }
                 break;
+            case R.id.btn_start2:
+                switch (countDownTimerService.getTimerStatus()){
+                    case CountDownTimerUtil.PREPARE:
+                        countDownTimerService.startCountDown();
+                        btnServiceStart.setText("PAUSE");
+                        break;
+                    case CountDownTimerUtil.START:
+                        countDownTimerService.pauseCountDown();
+                        btnServiceStart.setText("RESUME");
+                        break;
+                    case CountDownTimerUtil.PASUSE:
+                        countDownTimerService.startCountDown();
+                        btnServiceStart.setText("PAUSE");
+                        break;
+                }
+                break;
+            case R.id.btn_stop2:
+                btnServiceStart.setText("START");
+                countDownTimerService.stopCountDown();
+                break;
         }
     }
 
@@ -95,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * init timer status
      */
     private void initTimerStatus(){
-        timerSatus = PREPARE;
+        timerStatus = CountDownTimerUtil.PREPARE;
         timer_couting = distination_total;
     }
 
@@ -145,7 +195,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     private class MyTimerTask extends TimerTask{
 
-
         @Override
         public void run() {
             timer_couting -=timer_unit;
@@ -154,6 +203,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 initTimerStatus();
             }
             mHandler.sendEmptyMessage(1);
+        }
+    }
+
+    /**
+     * init countdowntimer buttons status for servce
+     */
+    private void initServiceCountDownTimerStatus(){
+        switch (countDownTimerService.getTimerStatus()){
+            case CountDownTimerUtil.PREPARE:
+                btnServiceStart.setText("START");
+                break;
+            case CountDownTimerUtil.START:
+                btnServiceStart.setText("PAUSE");
+                break;
+            case CountDownTimerUtil.PASUSE:
+                btnServiceStart.setText("RESUME");
+                break;
         }
     }
 
